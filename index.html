@@ -33,17 +33,6 @@
         .overflow-x-auto::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-
-        /* Styles for sticker buttons */
-        .sticker-btn {
-            @apply flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-gray-100 rounded-lg shadow-md cursor-pointer transition-all duration-200 ease-in-out hover:shadow-lg hover:bg-gray-200;
-        }
-        .sticker-btn img, .sticker-btn .emoji {
-            @apply w-10 h-10 sm:w-12 sm:h-12 object-contain;
-        }
-        .sticker-btn .emoji {
-             font-size: 3rem; /* Adjust emoji size */
-        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 flex flex-col items-center min-h-screen">
@@ -53,14 +42,14 @@
             Design Your Perfect Photo Frame
         </h1>
         <p class="text-lg text-center text-gray-600 mb-8">
-            Upload your image, choose a frame design, drag and resize, add text, and fun stickers!
+            Upload your image, choose a frame design, and then drag and resize your image within the frame!
         </p>
 
         <!-- Image Upload Section -->
         <div class="mb-8 p-6 bg-blue-50 rounded-xl shadow-inner flex flex-col sm:flex-row items-center justify-center gap-4">
             <label for="imageUpload" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
                 <span class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Upload Your Image
                 </span>
             </label>
@@ -76,50 +65,9 @@
             </div>
         </div>
 
-        <!-- Custom Text Section -->
-        <div class="mb-8 p-6 bg-purple-50 rounded-xl shadow-inner">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Add Custom Text</h2>
-            <div class="flex flex-col sm:flex-row gap-4 items-center mb-4">
-                <input type="text" id="customTextInput" placeholder="Your text here..." class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200">
-                <select id="fontFamilySelect" class="p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200">
-                    <option value="Arial">Arial</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Impact">Impact</option>
-                </select>
-                <input type="number" id="fontSizeInput" value="40" min="10" max="100" class="w-20 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200">
-                <input type="color" id="fontColorInput" value="#000000" class="w-10 h-10 border border-gray-300 rounded-md cursor-pointer">
-            </div>
-            <div class="flex justify-center">
-                <button id="addTextButton" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300">
-                    Add Text to Frame
-                </button>
-            </div>
-        </div>
-
-        <!-- Stickers Section -->
-        <div class="mb-8 p-6 bg-pink-50 rounded-xl shadow-inner">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Add Fun Stickers</h2>
-            <div id="stickerSelection" class="flex flex-wrap justify-center gap-3 sm:gap-4">
-                <!-- Stickers will be loaded here by JavaScript -->
-            </div>
-        </div>
-
         <!-- Canvas Preview Area -->
         <div class="flex justify-center items-center mb-8 bg-gray-100 p-4 rounded-xl shadow-md">
             <canvas id="previewCanvas" width="600" height="450" class="max-w-full h-auto"></canvas>
-        </div>
-
-        <!-- Delete Button for Text/Stickers -->
-        <div class="flex justify-center">
-            <button id="deleteSelectedButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-300">
-                <span class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Delete Selected Object
-                </span>
-            </button>
         </div>
     </div>
 
@@ -203,16 +151,6 @@
             }
         ];
 
-        // Digital stickers data (using emojis for simplicity)
-        const stickers = [
-            { id: 'heart', emoji: '❤️' },
-            { id: 'star', emoji: '⭐' },
-            { id: 'flower', emoji: '🌸' },
-            { id: 'smiley', emoji: '😊' },
-            { id: 'paw', emoji: '🐾' },
-            { id: 'camera', emoji: '📸' }
-        ];
-
         // Function to render frames in the selection area
         function renderFrameSelection() {
             const frameSelectionDiv = document.getElementById('frameSelection');
@@ -248,37 +186,9 @@
             });
         }
 
-        // Function to render stickers in the selection area
-        function renderStickerSelection() {
-            const stickerSelectionDiv = document.getElementById('stickerSelection');
-            stickerSelectionDiv.innerHTML = ''; // Clear previous stickers
-
-            stickers.forEach(sticker => {
-                const stickerButton = document.createElement('button');
-                stickerButton.className = 'sticker-btn'; // Apply Tailwind classes from style block
-                stickerButton.setAttribute('data-sticker-id', sticker.id);
-                stickerButton.innerHTML = `<span class="emoji">${sticker.emoji}</span>`; // Using emoji directly
-
-                stickerSelectionDiv.appendChild(stickerButton);
-
-                stickerButton.addEventListener('click', () => addStickerToCanvas(sticker.emoji));
-            });
-        }
-
-
         // Function to update the canvas with the selected frame and uploaded image
         function updatePreview() {
-            // Remove previous frame, inner border, and clipRect if they exist
-            if (currentFrame && canvas.contains(currentFrame)) {
-                canvas.remove(currentFrame);
-            }
-            if (innerBorderRect && canvas.contains(innerBorderRect)) {
-                canvas.remove(innerBorderRect);
-            }
-            // ClipRect is a property of the image, not a standalone canvas object
-            if (uploadedImage) {
-                uploadedImage.clipPath = undefined; // Remove old clipPath reference
-            }
+            canvas.clear(); // Clear existing elements on canvas
 
             // Set background for canvas if needed (e.g., if frame doesn't cover entire canvas)
             canvas.backgroundColor = '#ffffff'; // Default white background
@@ -289,6 +199,7 @@
                 const canvasHeight = canvas.getHeight();
 
                 let frameScaleFactor;
+                // Scale frame to fit the larger dimension of the canvas, while maintaining aspect ratio
                 const frameAspectRatio = currentFrame.width / currentFrame.height;
                 if (frameAspectRatio > canvasWidth / canvasHeight) { // Frame is wider relative to canvas
                     frameScaleFactor = canvasWidth / currentFrame.width;
@@ -304,12 +215,11 @@
                     selectable: false, // Make frame not selectable
                     evented: false, // Make frame not clickable
                 });
-                canvas.add(currentFrame); // Add the frame to the canvas
-                currentFrame.sendToBack(); // Ensure frame is the very back object
+                canvas.add(currentFrame); // Add the frame to the canvas first (background)
             }
 
-            if (currentFrameData) {
-                 // Calculate dynamic cutout dimensions based on the current frame position and scale
+            if (uploadedImage && currentFrameData) {
+                // Calculate dynamic cutout dimensions based on the current frame position and scale
                 const scaledCutoutX = currentFrame.left + (currentFrameData.cutout.x * currentFrame.getScaledWidth());
                 const scaledCutoutY = currentFrame.top + (currentFrameData.cutout.y * currentFrame.getScaledHeight());
                 const scaledCutoutWidth = currentFrameData.cutout.width * currentFrame.getScaledWidth();
@@ -343,49 +253,53 @@
                     absolutePositioned: true // Position based on canvas coordinates
                 });
                 canvas.add(innerBorderRect); // Add the inner border rectangle
-                innerBorderRect.bringToFront(); // Bring inner border to front of frame and image
-            }
 
-
-            if (uploadedImage && currentFrameData) {
-                // Attach the clipPath to the uploaded image
-                uploadedImage.clipPath = clipRect;
-
-                const scaledCutoutX = clipRect.left;
-                const scaledCutoutY = clipRect.top;
-                const scaledCutoutWidth = clipRect.width;
-                const scaledCutoutHeight = clipRect.height;
-
+                // Set initial scale for the uploaded image to cover the cutout area
+                // This ensures it looks good on first load/frame change
                 const imageAspectRatio = uploadedImage.width / uploadedImage.height;
                 const cutoutAspectRatio = scaledCutoutWidth / scaledCutoutHeight;
 
                 let imgScaleX, imgScaleY;
 
+                // Determine scale to make image 'cover' the cutout area
                 if (imageAspectRatio > cutoutAspectRatio) {
+                    // Image is wider than cutout, scale by height to cover
                     imgScaleY = scaledCutoutHeight / uploadedImage.height;
-                    imgScaleX = imgScaleY;
+                    imgScaleX = imgScaleY; // Maintain aspect ratio
                 } else {
+                    // Image is taller or same aspect as cutout, scale by width to cover
                     imgScaleX = scaledCutoutWidth / uploadedImage.width;
-                    imgScaleY = imgScaleX;
+                    imgScaleY = imgScaleX; // Maintain aspect ratio
                 }
 
                 uploadedImage.set({
                     scaleX: imgScaleX,
                     scaleY: imgScaleY,
-                    // Always center the image within the cutout after scaling
-                    left: scaledCutoutX + (scaledCutoutWidth - uploadedImage.getScaledWidth()) / 2,
-                    top: scaledCutoutY + (scaledCutoutHeight - uploadedImage.getScaledHeight()) / 2,
-                    selectable: true,
-                    evented: true,
-                    hasControls: true,
-                    hasBorders: true,
+                    selectable: true,   // Make image selectable for dragging and resizing
+                    evented: true,     // Make image clickable/draggable
+                    hasControls: true,  // Show resize/rotate controls
+                    hasBorders: true,   // Show selection borders
+                    // Set the clipPath to the rectangle
+                    clipPath: clipRect
                 });
 
-                if (!canvas.contains(uploadedImage)) {
-                    canvas.add(uploadedImage); // Add the image if not already on canvas
-                }
-                // Ensure image is above the frame but below the inner border, text, and stickers
-                uploadedImage.sendBackwards(); // Send just one layer back
+                // Center the image within the cutout after scaling
+                uploadedImage.set({
+                    left: scaledCutoutX + (scaledCutoutWidth - uploadedImage.getScaledWidth()) / 2,
+                    top: scaledCutoutY + (scaledCutoutHeight - uploadedImage.getScaledHeight()) / 2,
+                });
+
+
+                canvas.add(uploadedImage); // Add the image on top of the frame
+
+                // Ensure the clipPath and innerBorderRect are updated if the frame or canvas changes
+                uploadedImage.on('moving', function() {
+                    canvas.requestRenderAll();
+                });
+
+                uploadedImage.on('scaling', function() {
+                    canvas.requestRenderAll();
+                });
             }
 
             canvas.renderAll(); // Re-render the canvas to show changes
@@ -428,85 +342,14 @@
                 reader.onload = function(event) {
                     fabric.Image.fromURL(event.target.result, function(oImg) {
                         uploadedImage = oImg;
-                        // No need for initialCentered flag anymore, centering is unconditional
                         updatePreview();
                     });
                 };
                 reader.readAsDataURL(file);
             } else {
                 fileNameSpan.textContent = 'No image selected';
-                if (uploadedImage) {
-                    canvas.remove(uploadedImage); // Remove image from canvas
-                    uploadedImage = null; // Clear uploaded image
-                }
+                uploadedImage = null; // Clear uploaded image
                 updatePreview(); // Update canvas to reflect no image
-            }
-        });
-
-        // Function to add custom text to canvas
-        document.getElementById('addTextButton').addEventListener('click', function() {
-            const textContent = document.getElementById('customTextInput').value.trim();
-            if (textContent === '') {
-                showMessageBox('Please enter some text to add.');
-                return;
-            }
-
-            const fontFamily = document.getElementById('fontFamilySelect').value;
-            const fontSize = parseInt(document.getElementById('fontSizeInput').value);
-            const fontColor = document.getElementById('fontColorInput').value;
-
-            const newText = new fabric.IText(textContent, {
-                left: canvas.getWidth() / 2, // Initial position, roughly centered
-                top: canvas.getHeight() / 2,
-                fontFamily: fontFamily,
-                fontSize: fontSize,
-                fill: fontColor,
-                hasControls: true, // Allow resizing and rotating
-                hasBorders: true,
-                originX: 'center',
-                originY: 'center',
-            });
-
-            canvas.add(newText);
-            canvas.setActiveObject(newText); // Select the new text object
-            newText.bringToFront(); // Ensure text is always on top
-            canvas.renderAll();
-        });
-
-
-        // Function to add sticker to canvas
-        function addStickerToCanvas(emoji) {
-            const stickerText = new fabric.Text(emoji, {
-                left: canvas.getWidth() / 2,
-                top: canvas.getHeight() / 2,
-                fontSize: 60, // Initial size for emoji stickers
-                originX: 'center',
-                originY: 'center',
-                selectable: true,
-                evented: true,
-                hasControls: true,
-                hasBorders: true,
-            });
-            canvas.add(stickerText);
-            canvas.setActiveObject(stickerText); // Select the new sticker object
-            stickerText.bringToFront(); // Ensure sticker is always on top
-            canvas.renderAll();
-        }
-
-        // Handle delete selected object
-        document.getElementById('deleteSelectedButton').addEventListener('click', function() {
-            const activeObject = canvas.getActiveObject();
-            if (activeObject) {
-                // Prevent deleting the frame, inner border, or the main uploaded image unintentionally
-                if (activeObject === currentFrame || activeObject === innerBorderRect || activeObject === uploadedImage) {
-                    showMessageBox('You cannot delete the frame or the main uploaded image. Only custom text and stickers can be deleted.');
-                    return;
-                }
-                canvas.remove(activeObject);
-                canvas.discardActiveObject(); // Deselect the object after removal
-                canvas.renderAll();
-            } else {
-                showMessageBox('No object selected to delete. Please select text or a sticker first.');
             }
         });
 
@@ -549,10 +392,9 @@
         }
 
 
-        // Initialize frame selection and sticker selection on page load
+        // Initialize frame selection on page load
         window.onload = function() {
             renderFrameSelection();
-            renderStickerSelection();
             // Select the first frame by default
             if (frameDesigns.length > 0) {
                 selectFrame(frameDesigns[0].id);
@@ -570,11 +412,30 @@
             canvas.setDimensions({ width: newWidth, height: newHeight });
 
             // Re-render and update positions of objects after canvas resize
-            // The clipPath and innerBorderRect will be recreated based on the new frame size
-            updatePreview();
+            if (currentFrame && uploadedImage) {
+                updatePreview(); // Re-calls updatePreview to re-position and scale
+            } else if (currentFrame) {
+                 // Only update frame position if no image is present
+                const canvasWidth = canvas.getWidth();
+                const canvasHeight = canvas.getHeight();
+                const frameAspectRatio = currentFrame.width / currentFrame.height;
 
+                let frameScaleFactor;
+                if (frameAspectRatio > canvasWidth / canvasHeight) {
+                    frameScaleFactor = canvasWidth / currentFrame.width;
+                } else {
+                    frameScaleFactor = canvasHeight / currentFrame.height;
+                }
+                currentFrame.set({
+                    scaleX: frameScaleFactor,
+                    scaleY: frameScaleFactor,
+                    left: (canvasWidth - currentFrame.width * frameScaleFactor) / 2,
+                    top: (canvasHeight - currentFrame.height * frameScaleFactor) / 2,
+                });
+            }
             canvas.renderAll();
         }
+
 
         window.addEventListener('resize', resizeCanvas);
         // Initial canvas resize on load
