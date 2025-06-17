@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Frame Store Preview</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fabric.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        #previewCanvas {
+            border: 2px solid #e0e0e0;
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners for the canvas */
+        }
+        /* Custom scrollbar for frame selection */
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 flex flex-col items-center min-h-screen">
+
+    <div class="max-w-4xl w-full bg-white shadow-xl rounded-2xl p-6 sm:p-8 md:p-10 mb-8">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-gray-800 mb-6">
+            Design Your Perfect Photo Frame
+        </h1>
+        <p class="text-lg text-center text-gray-600 mb-8">
+            Upload your image, choose a frame design, and then drag and resize your image within the frame!
+        </p>
+
+        <!-- Image Upload Section -->
+        <div class="mb-8 p-6 bg-blue-50 rounded-xl shadow-inner flex flex-col sm:flex-row items-center justify-center gap-4">
+            <label for="imageUpload" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                <span class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Upload Your Image
+                </span>
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+            <span id="fileName" class="text-gray-700 text-base italic">No image selected</span>
+        </div>
+
+        <!-- Frame Selection Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Choose a Frame Design</h2>
+            <div id="frameSelection" class="flex flex-nowrap overflow-x-auto gap-4 pb-4">
+                <!-- Frame options will be loaded here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Canvas Preview Area -->
+        <div class="flex justify-center items-center mb-8 bg-gray-100 p-4 rounded-xl shadow-md">
+            <canvas id="previewCanvas" width="600" height="450" class="max-w-full h-auto"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Fabric.js canvas
+        const canvas = new fabric.Canvas('previewCanvas');
+        let uploadedImage = null; // To store the user's uploaded image
+        let currentFrame = null;  // To store the currently selected frame
+        let currentFrameData = null; // To store data of the current frame (cutout info)
+        let clipRect = null; // The clipping rectangle for the image
+        let innerBorderRect = null; // Rectangle for the inner border
+
+        // Define pre-built frame designs and their cutout areas (relative percentages)
+        const frameDesigns = [
+            {
+                id: 'frame1',
+                name: 'Classic Wood',
+                imageUrl: 'https://placehold.co/250x200/a0522d/ffffff?text=Classic+Wood+Frame',
+                // Cutout: x, y, width, height as percentages of the frame image dimensions
+                cutout: { x: 0.15, y: 0.15, width: 0.70, height: 0.70 },
+                aspectRatio: 250 / 200 // Original aspect ratio for placeholder
+            },
+            {
+                id: 'frame2',
+                name: 'Modern Black',
+                imageUrl: 'https://placehold.co/250x200/333333/ffffff?text=Modern+Black+Frame',
+                cutout: { x: 0.10, y: 0.10, width: 0.80, height: 0.80 },
+                aspectRatio: 250 / 200
+            },
+            {
+                id: 'frame3',
+                name: 'Elegant Gold',
+                imageUrl: 'https://placehold.co/250x200/daa520/ffffff?text=Elegant+Gold+Frame',
+                cutout: { x: 0.18, y: 0.18, width: 0.64, height: 0.64 },
+                aspectRatio: 250 / 200
+            },
+            {
+                id: 'frame4',
+                name: 'Minimal White',
+                imageUrl: 'https://placehold.co/250x200/ffffff/000000?text=Minimal+White+Frame',
+                cutout: { x: 0.05, y: 0.05, width: 0.90, height: 0.90 },
+                aspectRatio: 250 / 200
+            },
+            {
+                id: 'frame5',
+                name: 'Rustic Brown',
+                imageUrl: 'https://placehold.co/250x200/8B4513/ffffff?text=Rustic+Brown+Frame',
+                cutout: { x: 0.12, y: 0.12, width: 0.76, height: 0.76 },
+                aspectRatio: 250 / 200
+            },
+            {
+                id: 'frame6',
+                name: 'Silver Slim',
+                imageUrl: 'https://placehold.co/250x200/C0C0C0/000000?text=Silver+Slim+Frame',
+                cutout: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 },
+                aspectRatio: 250 / 200
+            },
+            {
+                id: 'frame7',
+                name: 'Square 2x2',
+                // Using 200x200 for a square aspect ratio representative of 2x2
+                imageUrl: 'https://placehold.co/200x200/FF5733/ffffff?text=2x2+Frame',
+                cutout: { x: 0.10, y: 0.10, width: 0.80, height: 0.80 },
+                aspectRatio: 1 // 1:1 aspect ratio
+            },
+            {
+                id: 'frame8',
+                name: 'Square 4x4',
+                // Using 200x200 for a square aspect ratio representative of 4x4
+                imageUrl: 'https://placehold.co/200x200/33FF57/000000?text=4x4+Frame',
+                cutout: { x: 0.08, y: 0.08, width: 0.84, height: 0.84 },
+                aspectRatio: 1 // 1:1 aspect ratio
+            },
+            {
+                id: 'frame9',
+                name: 'A4 Size',
+                // A4 aspect ratio is approximately 1:1.414 (210mm x 297mm)
+                imageUrl: 'https://placehold.co/200x283/000000/ffffff?text=A4+Frame',
+                cutout: { x: 0.07, y: 0.07, width: 0.86, height: 0.86 },
+                aspectRatio: 210 / 297 // A4 aspect ratio
+            }
+        ];
+
+        // Function to render frames in the selection area
+        function renderFrameSelection() {
+            const frameSelectionDiv = document.getElementById('frameSelection');
+            frameSelectionDiv.innerHTML = ''; // Clear previous frames
+
+            frameDesigns.forEach(frame => {
+                const frameCard = document.createElement('div');
+                frameCard.className = 'flex-shrink-0 w-32 cursor-pointer p-2 rounded-xl transition-all duration-200 ease-in-out hover:shadow-lg hover:border-blue-500 border-2 border-transparent bg-gray-50';
+                frameCard.setAttribute('data-frame-id', frame.id);
+
+                const img = document.createElement('img');
+                img.src = frame.imageUrl;
+                img.alt = frame.name;
+                // Adjust thumbnail height based on aspect ratio for better representation
+                let thumbHeight = 96; // default h-24 = 96px
+                if (frame.aspectRatio) {
+                    thumbHeight = 128 / frame.aspectRatio; // Fixed width of 128px for thumbnail, adjust height
+                }
+                img.style.width = '100%';
+                img.style.height = `${thumbHeight}px`;
+                img.style.objectFit = 'contain'; // Use contain to show full frame
+                img.className += ' rounded-md mb-2 shadow-sm';
+
+                const name = document.createElement('p');
+                name.textContent = frame.name;
+                name.className = 'text-center text-sm font-medium text-gray-700';
+
+                frameCard.appendChild(img);
+                frameCard.appendChild(name);
+                frameSelectionDiv.appendChild(frameCard);
+
+                frameCard.addEventListener('click', () => selectFrame(frame.id));
+            });
+        }
+
+        // Function to update the canvas with the selected frame and uploaded image
+        function updatePreview() {
+            canvas.clear(); // Clear existing elements on canvas
+
+            // Set background for canvas if needed (e.g., if frame doesn't cover entire canvas)
+            canvas.backgroundColor = '#ffffff'; // Default white background
+
+            if (currentFrame) {
+                // Adjust the size and position of the frame to fit the canvas
+                const canvasWidth = canvas.getWidth();
+                const canvasHeight = canvas.getHeight();
+
+                let frameScaleFactor;
+                // Scale frame to fit the larger dimension of the canvas, while maintaining aspect ratio
+                const frameAspectRatio = currentFrame.width / currentFrame.height;
+                if (frameAspectRatio > canvasWidth / canvasHeight) { // Frame is wider relative to canvas
+                    frameScaleFactor = canvasWidth / currentFrame.width;
+                } else { // Frame is taller relative to canvas
+                    frameScaleFactor = canvasHeight / currentFrame.height;
+                }
+
+                currentFrame.set({
+                    scaleX: frameScaleFactor,
+                    scaleY: frameScaleFactor,
+                    left: (canvasWidth - currentFrame.width * frameScaleFactor) / 2,
+                    top: (canvasHeight - currentFrame.height * frameScaleFactor) / 2,
+                    selectable: false, // Make frame not selectable
+                    evented: false, // Make frame not clickable
+                });
+                canvas.add(currentFrame); // Add the frame to the canvas first (background)
+            }
+
+            if (uploadedImage && currentFrameData) {
+                // Calculate dynamic cutout dimensions based on the current frame position and scale
+                const scaledCutoutX = currentFrame.left + (currentFrameData.cutout.x * currentFrame.getScaledWidth());
+                const scaledCutoutY = currentFrame.top + (currentFrameData.cutout.y * currentFrame.getScaledHeight());
+                const scaledCutoutWidth = currentFrameData.cutout.width * currentFrame.getScaledWidth();
+                const scaledCutoutHeight = currentFrameData.cutout.height * currentFrame.getScaledHeight();
+
+                // Define the clipping path (the "window" of the frame)
+                clipRect = new fabric.Rect({
+                    left: scaledCutoutX,
+                    top: scaledCutoutY,
+                    width: scaledCutoutWidth,
+                    height: scaledCutoutHeight,
+                    absolutePositioned: true, // Crucial: Clip path positions itself absolutely on canvas
+                    // These properties make it invisible on the canvas but it still functions as a clipPath
+                    fill: 'transparent',
+                    stroke: 'transparent',
+                    selectable: false,
+                    evented: false
+                });
+
+                // Add the inner border rectangle
+                innerBorderRect = new fabric.Rect({
+                    left: scaledCutoutX,
+                    top: scaledCutoutY,
+                    width: scaledCutoutWidth,
+                    height: scaledCutoutHeight,
+                    stroke: '#000000', // Black border
+                    strokeWidth: 2,    // Thin border
+                    fill: 'transparent',
+                    selectable: false,
+                    evented: false,
+                    absolutePositioned: true // Position based on canvas coordinates
+                });
+                canvas.add(innerBorderRect); // Add the inner border rectangle
+
+                // Set initial scale for the uploaded image to cover the cutout area
+                // This ensures it looks good on first load/frame change
+                const imageAspectRatio = uploadedImage.width / uploadedImage.height;
+                const cutoutAspectRatio = scaledCutoutWidth / scaledCutoutHeight;
+
+                let imgScaleX, imgScaleY;
+
+                // Determine scale to make image 'cover' the cutout area
+                if (imageAspectRatio > cutoutAspectRatio) {
+                    // Image is wider than cutout, scale by height to cover
+                    imgScaleY = scaledCutoutHeight / uploadedImage.height;
+                    imgScaleX = imgScaleY; // Maintain aspect ratio
+                } else {
+                    // Image is taller or same aspect as cutout, scale by width to cover
+                    imgScaleX = scaledCutoutWidth / uploadedImage.width;
+                    imgScaleY = imgScaleX; // Maintain aspect ratio
+                }
+
+                uploadedImage.set({
+                    scaleX: imgScaleX,
+                    scaleY: imgScaleY,
+                    selectable: true,   // Make image selectable for dragging and resizing
+                    evented: true,     // Make image clickable/draggable
+                    hasControls: true,  // Show resize/rotate controls
+                    hasBorders: true,   // Show selection borders
+                    // Set the clipPath to the rectangle
+                    clipPath: clipRect
+                });
+
+                // Center the image within the cutout after scaling
+                uploadedImage.set({
+                    left: scaledCutoutX + (scaledCutoutWidth - uploadedImage.getScaledWidth()) / 2,
+                    top: scaledCutoutY + (scaledCutoutHeight - uploadedImage.getScaledHeight()) / 2,
+                });
+
+
+                canvas.add(uploadedImage); // Add the image on top of the frame
+
+                // Ensure the clipPath and innerBorderRect are updated if the frame or canvas changes
+                uploadedImage.on('moving', function() {
+                    canvas.requestRenderAll();
+                });
+
+                uploadedImage.on('scaling', function() {
+                    canvas.requestRenderAll();
+                });
+            }
+
+            canvas.renderAll(); // Re-render the canvas to show changes
+        }
+
+        // Handle frame selection
+        function selectFrame(frameId) {
+            const selectedFrameData = frameDesigns.find(f => f.id === frameId);
+            if (!selectedFrameData) return;
+
+            // Remove previous active class
+            document.querySelectorAll('#frameSelection > div').forEach(card => {
+                card.classList.remove('border-blue-500', 'shadow-lg');
+            });
+
+            // Add active class to the newly selected frame
+            const newActiveCard = document.querySelector(`[data-frame-id="${frameId}"]`);
+            if (newActiveCard) {
+                newActiveCard.classList.add('border-blue-500', 'shadow-lg');
+            }
+
+            // Load the frame image onto the canvas
+            fabric.Image.fromURL(selectedFrameData.imageUrl, function(oImg) {
+                currentFrame = oImg;
+                currentFrameData = selectedFrameData;
+                updatePreview();
+            }, {
+                crossOrigin: 'anonymous' // Important for loading images from external domains
+            });
+        }
+
+        // Handle image upload
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileNameSpan = document.getElementById('fileName');
+
+            if (file) {
+                fileNameSpan.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    fabric.Image.fromURL(event.target.result, function(oImg) {
+                        uploadedImage = oImg;
+                        updatePreview();
+                    });
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fileNameSpan.textContent = 'No image selected';
+                uploadedImage = null; // Clear uploaded image
+                updatePreview(); // Update canvas to reflect no image
+            }
+        });
+
+        // Simple Message Box Implementation (replaces alert())
+        function showMessageBox(message) {
+            let messageBox = document.getElementById('messageBox');
+            if (!messageBox) {
+                messageBox = document.createElement('div');
+                messageBox.id = 'messageBox';
+                messageBox.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300 opacity-0';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-sm w-full transform -translate-y-4 transition-transform duration-300">
+                        <p class="text-xl font-semibold text-gray-800 mb-6">${message}</p>
+                        <button id="closeMessageBox" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+
+                document.getElementById('closeMessageBox').addEventListener('click', () => {
+                    messageBox.classList.remove('opacity-100');
+                    messageBox.classList.add('opacity-0');
+                    setTimeout(() => messageBox.remove(), 300); // Remove after transition
+                });
+
+                // Allow clicking outside to close
+                messageBox.addEventListener('click', (e) => {
+                    if (e.target === messageBox) {
+                        messageBox.classList.remove('opacity-100');
+                        messageBox.classList.add('opacity-0');
+                        setTimeout(() => messageBox.remove(), 300);
+                    }
+                });
+            } else {
+                 messageBox.querySelector('p').textContent = message;
+            }
+            messageBox.classList.remove('opacity-0');
+            messageBox.classList.add('opacity-100');
+             messageBox.querySelector('div').classList.remove('-translate-y-4');
+            messageBox.querySelector('div').classList.add('translate-y-0');
+        }
+
+
+        // Initialize frame selection on page load
+        window.onload = function() {
+            renderFrameSelection();
+            // Select the first frame by default
+            if (frameDesigns.length > 0) {
+                selectFrame(frameDesigns[0].id);
+            }
+        };
+
+        // Make canvas responsive by adjusting its dimensions on window resize
+        function resizeCanvas() {
+            const container = document.querySelector('.bg-gray-100'); // Get the container of the canvas
+            // Use a factor of container width to set canvas width, capped at 600px
+            const newWidth = Math.min(600, container.clientWidth * 0.95);
+            // Maintain original aspect ratio (600x450)
+            const newHeight = (newWidth / 600) * 450;
+
+            canvas.setDimensions({ width: newWidth, height: newHeight });
+
+            // Re-render and update positions of objects after canvas resize
+            if (currentFrame && uploadedImage) {
+                updatePreview(); // Re-calls updatePreview to re-position and scale
+            } else if (currentFrame) {
+                 // Only update frame position if no image is present
+                const canvasWidth = canvas.getWidth();
+                const canvasHeight = canvas.getHeight();
+                const frameAspectRatio = currentFrame.width / currentFrame.height;
+
+                let frameScaleFactor;
+                if (frameAspectRatio > canvasWidth / canvasHeight) {
+                    frameScaleFactor = canvasWidth / currentFrame.width;
+                } else {
+                    frameScaleFactor = canvasHeight / currentFrame.height;
+                }
+                currentFrame.set({
+                    scaleX: frameScaleFactor,
+                    scaleY: frameScaleFactor,
+                    left: (canvasWidth - currentFrame.width * frameScaleFactor) / 2,
+                    top: (canvasHeight - currentFrame.height * frameScaleFactor) / 2,
+                });
+            }
+            canvas.renderAll();
+        }
+
+
+        window.addEventListener('resize', resizeCanvas);
+        // Initial canvas resize on load
+        resizeCanvas();
+
+    </script>
+</body>
+</html>
